@@ -4,47 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Argerich">
-  <meta name="theme-color" content="#0052a4">
-  <meta name="mobile-web-app-capable" content="yes">
-  
-  <title>App Patología</title>
+  <title>App Argerich</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
     :root { --argerich: #0052a4; --bg: #f4f7f9; --text: #2c3e50; --danger: #d9534f; --success: #5cb85c; }
     html, body { margin: 0; padding: 0; width: 100%; height: 100vh; background-color: var(--bg); font-family: -apple-system, sans-serif; overflow: hidden; position: fixed; }
-    body { display: flex; justify-content: center; align-items: flex-start; padding-top: env(safe-area-inset-top, 20px); box-sizing: border-box; }
-    
+    body { display: flex; justify-content: center; align-items: flex-start; padding-top: 20px; box-sizing: border-box; }
     .card { background: white; width: 95%; max-width: 400px; max-height: 90vh; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; margin-top: 20px; }
     .header { background: var(--argerich); color: white; padding: 15px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
     .logo { width: 40px; height: 40px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
     .header h1 { margin: 0; font-size: 16px; font-weight: 700; }
-    
     .content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; }
     
-    /* Ajuste del lector para que no se aplaste */
     #reader { width: 100%; min-height: 250px; border-radius: 16px; overflow: hidden; border: 2px solid var(--argerich); box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; background: #000; display: none; }
     #reader video { object-fit: cover; }
-    
     .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 700; cursor: pointer; font-size: 16px; margin-top: 10px; }
     .btn-primary { background: var(--argerich); color: white; }
     .btn-outline { background: transparent; border: 2px solid #ddd; color: #777; }
-    
     .product-title { font-size: 22px; font-weight: 800; text-align: center; margin: 10px 0; color: var(--text); }
     .stock-badge { align-self: center; padding: 6px 15px; border-radius: 50px; background: #eef2f7; color: var(--argerich); font-weight: 700; margin-bottom: 20px; font-size: 14px; }
-    
     .qty-row { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 20px 0; }
     .qty-btn { width: 55px; height: 55px; border-radius: 15px; border: none; background: var(--argerich); color: white; font-size: 24px; font-weight: bold; }
     .qty-val { font-size: 45px; font-weight: 800; color: var(--argerich); min-width: 60px; text-align: center; }
-    
-    select { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 15px; font-size: 15px; -webkit-appearance: none; background: white; color: var(--text); font-weight: 600; }
+    select { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 15px; font-size: 15px; background: white; color: var(--text); font-weight: 600; }
     .toggle-row { display: flex; gap: 10px; margin-bottom: 15px; }
     .tgl { flex: 1; padding: 14px; border-radius: 12px; border: 2px solid #ddd; background: none; font-weight: 700; color: #999; }
     .tgl.active.take { border-color: var(--danger); color: var(--danger); background: #fff5f5; }
     .tgl.active.add { border-color: var(--success); color: var(--success); background: #f6fff6; }
-
     #view-scan, #view-form, #view-loading, #view-success { display: none; width: 100%; flex-direction: column; align-items: center; }
     .visible { display: flex !important; }
   </style>
@@ -60,45 +47,36 @@
     </div>
 
     <div class="content">
-      
       <div id="view-scan" class="visible">
         <h2 style="font-size: 18px; margin-bottom: 15px; color: var(--text);">Escanear Insumo</h2>
-        
         <div id="reader"></div>
-        
         <button id="btn-start" class="btn btn-primary" onclick="iniciarCamara()">📷 INICIAR CÁMARA</button>
-        <p id="cam-hint" style="text-align:center; color:#7f8c8d; font-size:13px; margin-top: 15px;">Toque el botón para activar el lector.</p>
       </div>
 
       <div id="view-form" style="width: 100%; display: none;">
         <h2 class="product-title" id="txt-prod">Nombre</h2>
         <div class="stock-badge" id="txt-stock">STOCK: 0</div>
-        
         <div style="width: 100%; text-align: left;">
           <label style="font-size:10px; font-weight:700; color:#7f8c8d; margin-bottom:5px; display:block;">RESPONSABLE</label>
           <select id="sel-user"><option>Andrea</option><option>Sebas</option><option>Marina</option><option>Roberto</option></select>
-          
           <label style="font-size:10px; font-weight:700; color:#7f8c8d; margin-bottom:5px; display:block;">UBICACIÓN</label>
           <select id="sel-loc"><option>Heladera</option><option>Alacena</option><option>Depósito Central</option></select>
         </div>
-
         <div class="toggle-row" style="width: 100%;">
           <button class="tgl active take" id="tgl-take" onclick="setMode('take')">RETIRAR</button>
           <button class="tgl add" id="tgl-add" onclick="setMode('add')">INGRESAR</button>
         </div>
-
         <div class="qty-row">
           <button class="qty-btn" onclick="chgQty(-1)">-</button>
           <div class="qty-val" id="txt-qty">1</div>
           <button class="qty-btn" onclick="chgQty(1)">+</button>
         </div>
-
         <button class="btn btn-primary" onclick="doSave()">CONFIRMAR REGISTRO</button>
         <button class="btn btn-outline" onclick="reiniciarApp()">CANCELAR</button>
       </div>
 
       <div id="view-loading" style="justify-content:center; align-items:center; height: 50vh;">
-        <h2 id="load-msg" style="color: var(--argerich);">Sincronizando...</h2>
+        <h2 id="load-msg" style="color: var(--argerich);">Procesando...</h2>
       </div>
 
       <div id="view-success" style="justify-content:center; align-items:center; text-align:center; height: 50vh;">
@@ -107,12 +85,11 @@
         <p style="color: #7f8c8d; margin-bottom: 25px;">Stock actualizado: <b id="txt-final" style="color: var(--text); font-size: 18px;">0</b></p>
         <button class="btn btn-primary" onclick="reiniciarApp()">ESCANEAR OTRO</button>
       </div>
-
     </div>
   </div>
 
   <script>
-    // ⚠️ REEMPLAZAR ESTO POR LA URL QUE TERMINA EN /exec
+    // ⚠️ REVISÁ QUE LAS COMILLAS ESTÉN ACÁ:
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwa2HiiSrn2uE8Ic9Jz_MTpnEqG-FgwTyBkcMEomWSC1vCfPBahiH01F4tWP-GWD5Mutw/exec'; 
     
     let html5QrCode;
@@ -123,23 +100,21 @@
       document.getElementById(id).style.display = 'flex';
     }
 
-    // Esta función solo se activa cuando el médico toca el botón
     function iniciarCamara() {
+      // SI APARECE ESTE CARTEL, EL CÓDIGO FUNCIONA BIEN. 
+      alert("Iniciando lente de la cámara..."); 
+
       document.getElementById('btn-start').style.display = 'none';
-      document.getElementById('cam-hint').style.display = 'none';
       document.getElementById('reader').style.display = 'block';
 
       if (html5QrCode) { html5QrCode.clear(); }
       html5QrCode = new Html5Qrcode("reader");
-      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
       
-      html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-        html5QrCode.stop().then(() => {
-          loadProduct(decodedText);
-        });
+      html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, (decodedText) => {
+        html5QrCode.stop().then(() => { loadProduct(decodedText); });
       }).catch(err => {
-        console.log("Error de cámara", err);
-        document.getElementById('reader').innerHTML = "<p style='padding:20px; text-align:center; color:red;'>Debe permitir el uso de la cámara cuando el celular lo pregunte.</p>";
+        alert("Falta dar permiso de cámara a Safari.");
+        reiniciarApp();
       });
     }
 
@@ -155,16 +130,11 @@
             document.getElementById('txt-prod').innerText = res.producto;
             document.getElementById('txt-stock').innerText = "STOCK ACTUAL: " + res.stock + " " + unidad;
             document.getElementById('txt-qty').innerText = qty;
-            setMode('take');
-            showView('view-form');
+            setMode('take'); showView('view-form');
           } else {
-            alert("El código escaneado no existe en el inventario.");
-            reiniciarApp();
+            alert("El código no existe."); reiniciarApp();
           }
-        }).catch(err => {
-          alert("Error de conexión con la base de datos.");
-          reiniciarApp();
-        });
+        }).catch(err => { alert("Error de conexión."); reiniciarApp(); });
     }
 
     function chgQty(n) { qty = Math.max(1, qty + n); document.getElementById('txt-qty').innerText = qty; }
@@ -178,28 +148,15 @@
     function doSave() {
       showView('view-loading');
       document.getElementById('load-msg').innerText = "Guardando...";
+      const data = { id: currentId, action: mode, qty: qty, user: document.getElementById('sel-user').value, acopio: document.getElementById('sel-loc').value };
       
-      const data = {
-        id: currentId,
-        action: mode,
-        qty: qty,
-        user: document.getElementById('sel-user').value,
-        acopio: document.getElementById('sel-loc').value
-      };
-      
-      fetch(SCRIPT_URL, { 
-        method: 'POST', 
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "text/plain;charset=utf-8" } 
-      })
+      fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data), headers: { "Content-Type": "text/plain;charset=utf-8" } })
       .then(r => r.json())
       .then(res => {
         if(res.status === 'success') {
-          document.getElementById('txt-final').innerText = res.stock + " " + unidad;
-          showView('view-success');
+          document.getElementById('txt-final').innerText = res.stock + " " + unidad; showView('view-success');
         } else {
-          alert("Error al guardar: " + res.message);
-          showView('view-form');
+          alert("Error al guardar."); showView('view-form');
         }
       });
     }
@@ -207,10 +164,8 @@
     function reiniciarApp() {
       showView('view-scan');
       document.getElementById('btn-start').style.display = 'block';
-      document.getElementById('cam-hint').style.display = 'block';
       document.getElementById('reader').style.display = 'none';
     }
-
   </script>
 </body>
 </html>
