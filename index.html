@@ -10,12 +10,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   
   <title>App Patología</title>
-  
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
     :root { --argerich: #0052a4; --bg: #f4f7f9; --text: #2c3e50; --danger: #d9534f; --success: #5cb85c; }
-    /* Evita el rebote de iOS cuando no hay barra de Safari */
     html, body { margin: 0; padding: 0; width: 100%; height: 100vh; background-color: var(--bg); font-family: -apple-system, sans-serif; overflow: hidden; position: fixed; }
     body { display: flex; justify-content: center; align-items: flex-start; padding-top: env(safe-area-inset-top, 20px); box-sizing: border-box; }
     
@@ -26,8 +24,8 @@
     
     .content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; }
     
-    /* ESTILOS DE LA CÁMARA NATIVA */
-    #reader { width: 100%; border-radius: 16px; overflow: hidden; border: 2px solid var(--argerich); box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; background: black; }
+    /* Ajuste del lector para que no se aplaste */
+    #reader { width: 100%; min-height: 250px; border-radius: 16px; overflow: hidden; border: 2px solid var(--argerich); box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; background: #000; display: none; }
     #reader video { object-fit: cover; }
     
     .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 700; cursor: pointer; font-size: 16px; margin-top: 10px; }
@@ -65,8 +63,11 @@
       
       <div id="view-scan" class="visible">
         <h2 style="font-size: 18px; margin-bottom: 15px; color: var(--text);">Escanear Insumo</h2>
+        
         <div id="reader"></div>
-        <p style="text-align:center; color:#7f8c8d; font-size:13px; margin-top: 15px;">Apunte la cámara al código QR.</p>
+        
+        <button id="btn-start" class="btn btn-primary" onclick="iniciarCamara()">📷 INICIAR CÁMARA</button>
+        <p id="cam-hint" style="text-align:center; color:#7f8c8d; font-size:13px; margin-top: 15px;">Toque el botón para activar el lector.</p>
       </div>
 
       <div id="view-form" style="width: 100%; display: none;">
@@ -93,7 +94,7 @@
         </div>
 
         <button class="btn btn-primary" onclick="doSave()">CONFIRMAR REGISTRO</button>
-        <button class="btn btn-outline" onclick="resetScan()">CANCELAR</button>
+        <button class="btn btn-outline" onclick="reiniciarApp()">CANCELAR</button>
       </div>
 
       <div id="view-loading" style="justify-content:center; align-items:center; height: 50vh;">
@@ -104,7 +105,7 @@
         <div style="font-size:60px; margin-bottom: 15px;">✅</div>
         <h2 style="color: var(--text);">¡Hecho!</h2>
         <p style="color: #7f8c8d; margin-bottom: 25px;">Stock actualizado: <b id="txt-final" style="color: var(--text); font-size: 18px;">0</b></p>
-        <button class="btn btn-primary" onclick="resetScan()">ESCANEAR OTRO</button>
+        <button class="btn btn-primary" onclick="reiniciarApp()">ESCANEAR OTRO</button>
       </div>
 
     </div>
@@ -122,10 +123,13 @@
       document.getElementById(id).style.display = 'flex';
     }
 
-    function startScan() {
-      showView('view-scan');
+    // Esta función solo se activa cuando el médico toca el botón
+    function iniciarCamara() {
+      document.getElementById('btn-start').style.display = 'none';
+      document.getElementById('cam-hint').style.display = 'none';
+      document.getElementById('reader').style.display = 'block';
+
       if (html5QrCode) { html5QrCode.clear(); }
-      
       html5QrCode = new Html5Qrcode("reader");
       const config = { fps: 10, qrbox: { width: 250, height: 250 } };
       
@@ -135,7 +139,7 @@
         });
       }).catch(err => {
         console.log("Error de cámara", err);
-        document.getElementById('reader').innerHTML = "<p style='padding:20px; text-align:center; color:red;'>Active los permisos de cámara en Safari para usar la app.</p>";
+        document.getElementById('reader').innerHTML = "<p style='padding:20px; text-align:center; color:red;'>Debe permitir el uso de la cámara cuando el celular lo pregunte.</p>";
       });
     }
 
@@ -155,11 +159,11 @@
             showView('view-form');
           } else {
             alert("El código escaneado no existe en el inventario.");
-            startScan();
+            reiniciarApp();
           }
         }).catch(err => {
           alert("Error de conexión con la base de datos.");
-          startScan();
+          reiniciarApp();
         });
     }
 
@@ -186,7 +190,7 @@
       fetch(SCRIPT_URL, { 
         method: 'POST', 
         body: JSON.stringify(data),
-        headers: { "Content-Type": "text/plain;charset=utf-8" } // Text plain engaña el bloqueo CORS
+        headers: { "Content-Type": "text/plain;charset=utf-8" } 
       })
       .then(r => r.json())
       .then(res => {
@@ -200,9 +204,13 @@
       });
     }
 
-    function resetScan() { startScan(); }
+    function reiniciarApp() {
+      showView('view-scan');
+      document.getElementById('btn-start').style.display = 'block';
+      document.getElementById('cam-hint').style.display = 'block';
+      document.getElementById('reader').style.display = 'none';
+    }
 
-    window.onload = startScan;
   </script>
 </body>
 </html>
