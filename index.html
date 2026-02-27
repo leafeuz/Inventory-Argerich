@@ -6,13 +6,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Argerich">
-  <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Cruz_Roja.svg/512px-Cruz_Roja.svg.png">
+  <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=Inventario+Argerich&background=0052a4&color=fff&size=512&bold=true">
 
-  <title>App Patología Argerich</title>
+  <title>Tablero Patología Argerich</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
-    :root { --argerich: #0052a4; --bg: #f2f2f7; --card-bg: #ffffff; --text: #1c1c1e; --subtext: #8e8e93; --danger: #ff3b30; --success: #34c759; }
+    :root { --argerich: #0052a4; --bg: #f2f2f7; --card-bg: #ffffff; --text: #1c1c1e; --subtext: #8e8e93; --danger: #ff3b30; --success: #34c759; --border: rgba(0,0,0,0.08); }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
     html, body {
@@ -23,57 +23,72 @@
 
     .app-container { height: 100%; display: flex; flex-direction: column; }
 
+    /* HEADER CORPORATIVO */
     .header {
       padding: env(safe-area-inset-top, 40px) 20px 15px;
-      background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
-      border-bottom: 0.5px solid rgba(0,0,0,0.1);
+      background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+      border-bottom: 0.5px solid var(--border);
       display: flex; align-items: center; gap: 12px; flex-shrink: 0; z-index: 10;
     }
-    .logo { width: 35px; height: 35px; background: var(--argerich); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-    .header h1 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text); }
+    .logo { width: 32px; height: 32px; background: var(--argerich); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .header h1 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
 
-    .content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; }
+    /* TABLERO SCROLLEABLE */
+    .dashboard { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
 
-    /* VISTAS */
-    .view { display: none; width: 100%; max-width: 400px; flex-direction: column; animation: fadeIn 0.2s ease-out; }
-    .view.active { display: flex; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    /* MÓDULO 1: CÁMARA (ARRIBA) */
+    .scanner-module { background: var(--card-bg); border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid var(--border); }
+    .scanner-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .scanner-title { font-size: 14px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.5px; margin: 0; }
+    .status-indicator { font-size: 12px; font-weight: 600; color: var(--subtext); display: flex; align-items: center; gap: 5px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--subtext); transition: 0.3s; }
+    .status-dot.active { background: var(--danger); box-shadow: 0 0 8px rgba(255, 59, 48, 0.5); animation: pulse 1.5s infinite; }
 
-    /* LECTOR: CUADRADO PERFECTO 1:1 */
-    #reader { width: 100%; aspect-ratio: 1 / 1; border-radius: 16px; overflow: hidden; background: #000; margin-bottom: 20px; position: relative; }
+    #reader-container { width: 100%; aspect-ratio: 1 / 1; border-radius: 14px; overflow: hidden; background: #e5e5ea; position: relative; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; }
+    #reader { width: 100%; height: 100%; display: none; }
     #reader video { width: 100% !important; height: 100% !important; object-fit: cover; }
     #reader__scan_region { border: 2px solid var(--argerich); border-radius: 12px; }
+    
+    /* Overlay del lector cuando está inactivo o cargando */
+    #reader-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(242, 242, 247, 0.85); backdrop-filter: blur(5px); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; z-index: 5; }
+    .overlay-hidden { opacity: 0; pointer-events: none; }
+    .overlay-icon { width: 40px; height: 40px; stroke: var(--subtext); margin-bottom: 10px; }
+    #overlay-text { font-size: 14px; font-weight: 600; color: var(--subtext); text-align: center; padding: 0 20px; }
 
-    /* BOTONES */
-    .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 600; font-size: 16px; cursor: pointer; margin-top: 10px; transition: transform 0.1s, opacity 0.2s; -webkit-appearance: none; }
-    .btn:active { transform: scale(0.98); opacity: 0.9; }
-    .btn-primary { background: var(--argerich); color: white; }
-    .btn-secondary { background: #e5e5ea; color: var(--text); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    /* MÓDULO 2: DATOS (ABAJO) */
+    .form-module { background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid var(--border); transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    
+    /* CLASE MAGICA: Desenfoca y bloquea el formulario */
+    .form-module.locked { opacity: 0.4; filter: grayscale(100%) blur(1px); pointer-events: none; transform: scale(0.98); }
 
-    /* FORMULARIO */
-    .form-card { background: var(--card-bg); border-radius: 20px; padding: 25px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; }
-    .product-title { font-size: 22px; font-weight: 800; text-align: center; margin: 0 0 8px 0; }
-    .stock-badge { align-self: center; padding: 6px 14px; border-radius: 8px; background: rgba(0, 82, 164, 0.1); color: var(--argerich); font-weight: 700; font-size: 12px; margin: 0 auto 25px; display: table; }
+    .product-title { font-size: 22px; font-weight: 800; text-align: center; margin: 0 0 8px 0; color: var(--text); }
+    .stock-badge { align-self: center; padding: 6px 14px; border-radius: 8px; background: rgba(0, 82, 164, 0.1); color: var(--argerich); font-weight: 700; font-size: 12px; margin: 0 auto 20px; display: table; }
 
     label { font-size: 11px; font-weight: 600; color: var(--subtext); text-transform: uppercase; margin-bottom: 6px; display: block; padding-left: 2px; }
-    select { width: 100%; padding: 14px; border-radius: 12px; border: none; background: #f2f2f7; font-size: 16px; color: var(--text); font-weight: 500; margin-bottom: 20px; -webkit-appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2214%22%20height%3D%228%22%20viewBox%3D%220%200%2014%208%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L7%207L13%201%22%20stroke%3D%22%238E8E93%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 15px center; background-size: 12px; }
+    select { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: #f9f9fb; font-size: 16px; color: var(--text); font-weight: 500; margin-bottom: 20px; -webkit-appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2214%22%20height%3D%228%22%20viewBox%3D%220%200%2014%208%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L7%207L13%201%22%20stroke%3D%22%238E8E93%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 15px center; background-size: 12px; }
 
-    .toggle-row { display: flex; gap: 8px; margin-bottom: 25px; background: #f2f2f7; padding: 5px; border-radius: 14px; }
+    .toggle-row { display: flex; gap: 8px; margin-bottom: 25px; background: #f9f9fb; padding: 5px; border-radius: 14px; border: 1px solid var(--border); }
     .tgl { flex: 1; padding: 12px; border-radius: 10px; border: none; background: transparent; font-weight: 600; font-size: 15px; color: var(--subtext); transition: 0.2s; -webkit-appearance: none; }
     .tgl.active { background: white; color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .tgl.active.take { color: var(--danger); }
     .tgl.active.add { color: var(--success); }
 
-    .qty-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; background: #f2f2f7; border-radius: 16px; padding: 10px; }
-    .qty-btn { width: 50px; height: 50px; border-radius: 12px; border: none; background: white; color: var(--text); font-size: 26px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); -webkit-appearance: none; }
+    .qty-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; background: #f9f9fb; border-radius: 16px; padding: 10px; border: 1px solid var(--border); }
+    .qty-btn { width: 50px; height: 50px; border-radius: 12px; border: none; background: white; color: var(--text); font-size: 26px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); -webkit-appearance: none; }
     .qty-val { font-size: 38px; font-weight: 700; color: var(--argerich); }
+
+    /* COMPONENTES GENERALES */
+    .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 600; font-size: 15px; cursor: pointer; transition: transform 0.1s, opacity 0.2s; -webkit-appearance: none; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-primary { background: var(--argerich); color: white; box-shadow: 0 4px 15px rgba(0, 82, 164, 0.15); }
+    .btn-secondary { background: #e5e5ea; color: var(--text); margin-top: 10px; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .svg-icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
     
-    .status-container { background: white; border-radius: 20px; padding: 40px 20px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-    
-    /* ICONO VECTORIAL DE EXITO */
-    .success-icon { stroke-dasharray: 100; stroke-dashoffset: 100; animation: drawCheck 0.6s ease-out forwards; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+    .success-icon-anim { stroke-dasharray: 100; stroke-dashoffset: 100; animation: drawCheck 0.6s ease-out forwards; }
   </style>
 </head>
 <body>
@@ -81,7 +96,7 @@
   <div class="app-container">
     <div class="header">
       <div class="logo">
-        <svg viewBox="0 0 100 100" width="20" height="20">
+        <svg viewBox="0 0 100 100" width="18" height="18">
           <path d="M50 5 L10 25 L10 60 C10 80 45 95 50 95 C55 95 90 80 90 60 L90 25 Z" fill="white"/>
           <rect x="42" y="30" width="16" height="40" fill="#0052a4"/>
           <rect x="30" y="42" width="40" height="16" fill="#0052a4"/>
@@ -90,66 +105,74 @@
       <h1>Patología Argerich</h1>
     </div>
 
-    <div class="content">
-      <div id="view-scan" class="view active">
-        <div id="reader"></div>
-        <button id="btn-start" class="btn btn-primary" onclick="iniciarCamara()">INICIAR CÁMARA</button>
-      </div>
-
-      <div id="view-form" class="view">
-        <div class="form-card">
-          <h2 class="product-title" id="txt-prod">Nombre</h2>
-          <div class="stock-badge" id="txt-stock">STOCK: 0</div>
-
-          <label>Responsable</label>
-          <select id="sel-user" onchange="guardarMemoria()"><option>Andrea</option><option>Sebas</option><option>Marina</option><option>Roberto</option></select>
-
-          <label>Ubicación</label>
-          <select id="sel-loc" onchange="guardarMemoria()"><option>Heladera</option><option>Alacena</option><option>Depósito Central</option></select>
-
-          <div class="toggle-row">
-            <button class="tgl active take" id="tgl-take" onclick="setMode('take')">Retirar</button>
-            <button class="tgl add" id="tgl-add" onclick="setMode('add')">Ingresar</button>
+    <div class="dashboard">
+      
+      <div class="scanner-module">
+        <div class="scanner-header">
+          <h2 class="scanner-title">Lector QR</h2>
+          <div class="status-indicator">
+            <div class="status-dot" id="dot-status"></div>
+            <span id="txt-status">Inactivo</span>
           </div>
+        </div>
 
-          <div class="qty-row">
-            <button class="qty-btn" onclick="chgQty(-1)">−</button>
-            <div class="qty-val" id="txt-qty">1</div>
-            <button class="qty-btn" onclick="chgQty(1)">+</button>
+        <div id="reader-container">
+          <div id="reader"></div>
+          
+          <div id="reader-overlay">
+            <svg class="overlay-icon" id="icon-overlay" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+            </svg>
+            <span id="overlay-text">A la espera de activación</span>
           </div>
-
-          <button class="btn btn-primary" onclick="doSave()">CONFIRMAR REGISTRO</button>
-          <button class="btn btn-secondary" onclick="reiniciarApp()">CANCELAR</button>
         </div>
+
+        <button id="btn-start" class="btn btn-primary" onclick="iniciarCamara()">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          ACTIVAR LECTOR
+        </button>
       </div>
 
-      <div id="view-loading" class="view" style="justify-content:center; flex-grow:1;">
-        <div class="status-container">
-          <h2 id="load-msg" style="color:var(--text); margin:0;">Procesando...</h2>
+      <div class="form-module locked" id="panel-datos">
+        <h2 class="product-title" id="txt-prod">---</h2>
+        <div class="stock-badge" id="txt-stock">ESCANEE UN PRODUCTO</div>
+
+        <label>Responsable</label>
+        <select id="sel-user" onchange="guardarMemoria()"><option>Andrea</option><option>Sebas</option><option>Marina</option><option>Roberto</option></select>
+
+        <label>Ubicación</label>
+        <select id="sel-loc" onchange="guardarMemoria()"><option>Heladera</option><option>Alacena</option><option>Depósito Central</option></select>
+
+        <div class="toggle-row">
+          <button class="tgl active take" id="tgl-take" onclick="setMode('take')">Retirar</button>
+          <button class="tgl add" id="tgl-add" onclick="setMode('add')">Ingresar</button>
         </div>
+
+        <div class="qty-row">
+          <button class="qty-btn" onclick="chgQty(-1)">−</button>
+          <div class="qty-val" id="txt-qty">1</div>
+          <button class="qty-btn" onclick="chgQty(1)">+</button>
+        </div>
+
+        <button class="btn btn-primary" id="btn-save" onclick="doSave()">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          GUARDAR REGISTRO
+        </button>
+        <button class="btn btn-secondary" onclick="resetTablero()">CANCELAR</button>
       </div>
 
-      <div id="view-success" class="view" style="justify-content:center; flex-grow:1;">
-        <div class="status-container">
-          <svg viewBox="0 0 24 24" width="70" height="70" stroke="var(--success)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 15px; display: block;">
-            <circle cx="12" cy="12" r="10" opacity="0.2"></circle>
-            <polyline class="success-icon" points="8 12.5 11 15.5 16 9"></polyline>
-          </svg>
-          <h2 style="color:var(--text); margin:0 0 5px;">Operación Exitosa</h2>
-          <p style="color:var(--subtext); margin:0 0 25px;">Stock actualizado a: <b id="txt-final" style="color:var(--text);">0</b></p>
-          <button class="btn btn-primary" onclick="reiniciarApp()">ESCANEAR OTRO</button>
-        </div>
-      </div>
     </div>
   </div>
 
   <script>
+    // URL OFICIAL DE LA BASE DE DATOS
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwa2HiiSrn2uE8Ic9Jz_MTpnEqG-FgwTyBkcMEomWSC1vCfPBahiH01F4tWP-GWD5Mutw/exec';
 
     let html5QrCode = null; let currentId = ''; let qty = 1; let mode = 'take'; let unidad = '';
     let audioCtx = null;
 
-    // --- MÓDULO DE SONIDO Y VIBRACIÓN ---
+    // --- AUDIO & HAPTIC ---
     function initAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -159,48 +182,58 @@
       if (!audioCtx) return;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      osc.connect(gain); gain.connect(audioCtx.destination);
       
       if (type === 'scan') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Tono de escáner
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
         osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.1);
       } else if (type === 'success') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime); // Tono agradable de confirmación
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime); 
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
         osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.3);
       }
     }
-
     function triggerHaptic() { if (navigator.vibrate) navigator.vibrate(20); }
 
-    // --- MÓDULO DE MEMORIA (LocalStorage) ---
+    // --- MEMORIA ---
     function cargarMemoria() {
       const savedUser = localStorage.getItem('argerich_user');
       const savedLoc = localStorage.getItem('argerich_loc');
       if (savedUser) document.getElementById('sel-user').value = savedUser;
       if (savedLoc) document.getElementById('sel-loc').value = savedLoc;
     }
-
     function guardarMemoria() {
       localStorage.setItem('argerich_user', document.getElementById('sel-user').value);
       localStorage.setItem('argerich_loc', document.getElementById('sel-loc').value);
     }
-
-    // Al iniciar la página, cargamos los datos guardados
     window.onload = cargarMemoria;
 
-    // --- LÓGICA DE LA APP ---
-    function showView(id) {
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
+    // --- CONTROL DE UI (EL TABLERO) ---
+    function setOverlay(status, text, iconSvg) {
+      const overlay = document.getElementById('reader-overlay');
+      const icon = document.getElementById('icon-overlay');
+      const txt = document.getElementById('overlay-text');
+      const dot = document.getElementById('dot-status');
+      const dotTxt = document.getElementById('txt-status');
+
+      if (status === 'hide') {
+        overlay.classList.add('overlay-hidden');
+        dot.className = 'status-dot active'; dotTxt.innerText = 'Buscando'; dotTxt.style.color = 'var(--danger)';
+      } else {
+        overlay.classList.remove('overlay-hidden');
+        icon.innerHTML = iconSvg; txt.innerText = text;
+        dot.className = 'status-dot'; dotTxt.innerText = 'Inactivo'; dotTxt.style.color = 'var(--subtext)';
+      }
     }
 
+    function lockForm(isLocked) {
+      const panel = document.getElementById('panel-datos');
+      if (isLocked) { panel.classList.add('locked'); } 
+      else { panel.classList.remove('locked'); }
+    }
+
+    // --- CORE LOGIC ---
     async function apagarCamara() {
       if (html5QrCode) {
         try { await html5QrCode.stop(); } catch (e) {}
@@ -208,15 +241,17 @@
         html5QrCode = null;
       }
       document.getElementById('reader').innerHTML = '';
+      document.getElementById('reader').style.display = 'none';
     }
 
     async function iniciarCamara() {
-      initAudio(); // Desbloquea el audio en iOS
+      initAudio();
       const btn = document.getElementById('btn-start');
-      btn.disabled = true;
-      btn.innerText = 'Activando lente...';
+      btn.disabled = true; btn.innerHTML = '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.34-9.57l-3 3"></path></svg> INICIANDO...';
+      lockForm(true);
 
       await apagarCamara();
+      document.getElementById('reader').style.display = 'block';
       html5QrCode = new Html5Qrcode("reader");
 
       try {
@@ -224,85 +259,110 @@
           { facingMode: "environment" },
           { fps: 15, qrbox: 250 },
           async (decodedText) => {
-            triggerHaptic();
-            playSound('scan'); // Suena el Bip!
+            triggerHaptic(); playSound('scan');
             await apagarCamara();
-            loadProduct(decodedText);
+            setOverlay('show', 'Procesando código...', '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>'); // Reloj SVG
+            btn.style.display = 'none';
+            procesarEscaneo(decodedText);
           }
         );
-        btn.style.display = 'none';
+        setOverlay('hide');
+        btn.innerHTML = '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"></path></svg> DETENER';
         btn.disabled = false;
-        btn.innerText = 'INICIAR CÁMARA';
+        btn.onclick = resetTablero; // Cambia la función del botón a cancelar
       } catch (err) {
-        alert("Permita el acceso a la cámara en Safari.");
-        reiniciarApp();
+        alert("Active los permisos de cámara en Safari.");
+        resetTablero();
       }
     }
 
-    function loadProduct(id) {
-      showView('view-loading');
-      document.getElementById('load-msg').innerText = 'Buscando insumo...';
-
+    function procesarEscaneo(id) {
       fetch(`${SCRIPT_URL}?id=${encodeURIComponent(id)}`)
         .then(r => r.json())
         .then(res => {
           if (res.status === 'success') {
             currentId = id; qty = 1; unidad = res.unidad || '';
             document.getElementById('txt-prod').innerText = res.producto || id;
-            document.getElementById('txt-stock').innerText = "STOCK DISPONIBLE: " + res.stock + (unidad ? (" " + unidad) : "");
+            document.getElementById('txt-stock').innerText = "STOCK ACTUAL: " + res.stock + (unidad ? (" " + unidad) : "");
             document.getElementById('txt-qty').innerText = qty;
             setMode('take');
-            showView('view-form');
+            
+            // Éxito: Se bloquea la cámara, se habilita el formulario
+            setOverlay('show', 'Código capturado. Complete abajo.', '<polyline points="20 6 9 17 4 12"></polyline>'); // Check SVG simple
+            lockForm(false);
           } else {
-            alert("Insumo no encontrado en el inventario."); reiniciarApp();
+            alert("El insumo no existe en el inventario."); resetTablero();
           }
         })
-        .catch(() => { alert("Error de conexión."); reiniciarApp(); });
+        .catch(() => { alert("Error de conexión. Intente nuevamente."); resetTablero(); });
     }
 
     function chgQty(n) { 
-      triggerHaptic(); 
-      qty = Math.max(1, qty + n); 
+      triggerHaptic(); qty = Math.max(1, qty + n); 
       document.getElementById('txt-qty').innerText = qty; 
     }
     
     function setMode(m) {
-      triggerHaptic();
-      mode = m;
+      triggerHaptic(); mode = m;
       document.getElementById('tgl-take').classList.toggle('active', m === 'take');
       document.getElementById('tgl-add').classList.toggle('active', m === 'add');
     }
 
     function doSave() {
-      guardarMemoria(); // Aseguramos que se guarde al confirmar
-      showView('view-loading');
-      document.getElementById('load-msg').innerText = 'Impactando base de datos...';
+      guardarMemoria();
+      lockForm(true); // Bloquea mientras guarda
+      
+      const btnSave = document.getElementById('btn-save');
+      const originalText = btnSave.innerHTML;
+      btnSave.innerHTML = 'GUARDANDO...';
 
       const data = { id: currentId, action: mode, qty: qty, user: document.getElementById('sel-user').value, acopio: document.getElementById('sel-loc').value };
 
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "text/plain;charset=utf-8" }
-      })
+      fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data), headers: { "Content-Type": "text/plain;charset=utf-8" } })
       .then(r => r.json())
       .then(res => {
-        triggerHaptic();
-        playSound('success'); // Suena el Ding!
-        document.getElementById('txt-final').innerText = (res.stock ?? '?') + (unidad ? (" " + unidad) : "");
-        showView('view-success');
+        triggerHaptic(); playSound('success');
+        
+        // Estado de Éxito en el Lector Visual
+        setOverlay('show', '¡Registro Exitoso! Stock final: ' + (res.stock ?? '?') + ' ' + unidad, '<circle cx="12" cy="12" r="10" stroke="var(--success)"></circle><polyline class="success-icon-anim" points="8 12.5 11 15.5 16 9" stroke="var(--success)"></polyline>');
+        document.getElementById('overlay-text').style.color = 'var(--text)';
+        
+        // Resetear variables para el próximo escaneo
+        currentId = ''; qty = 1;
+        document.getElementById('txt-prod').innerText = "---";
+        document.getElementById('txt-stock').innerText = "ESCANEE UN PRODUCTO";
+        
+        // Restaurar botón principal
+        const btnStart = document.getElementById('btn-start');
+        btnStart.style.display = 'flex';
+        btnStart.innerHTML = '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg> ESCANEAR OTRO';
+        btnStart.onclick = iniciarCamara;
+        btnStart.classList.replace('btn-secondary', 'btn-primary');
+
+        btnSave.innerHTML = originalText;
       })
-      .catch(() => { alert("Error al guardar la operación."); showView('view-form'); });
+      .catch(() => { 
+        alert("Error al guardar la operación."); 
+        lockForm(false);
+        btnSave.innerHTML = originalText;
+      });
     }
 
-    async function reiniciarApp() {
+    async function resetTablero() {
       await apagarCamara();
-      showView('view-scan');
+      lockForm(true);
+      
+      document.getElementById('txt-prod').innerText = "---";
+      document.getElementById('txt-stock').innerText = "ESCANEE UN PRODUCTO";
+      document.getElementById('overlay-text').style.color = 'var(--subtext)';
+      
+      setOverlay('show', 'A la espera de activación', '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line>');
       
       const btn = document.getElementById('btn-start');
-      btn.style.display = 'block';
+      btn.style.display = 'flex';
       btn.disabled = false;
-      btn.innerText = 'INICIAR CÁMARA';
+      btn.innerHTML = '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg> ACTIVAR LECTOR';
+      btn.onclick = iniciarCamara;
       
       currentId = ''; qty = 1; mode = 'take'; unidad = '';
     }
