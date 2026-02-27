@@ -6,27 +6,27 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Argerich">
-  
+
   <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Cruz_Roja.svg/512px-Cruz_Roja.svg.png">
 
   <title>App Patología Argerich</title>
-  
+
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
     :root { --argerich: #0052a4; --bg: #f2f2f7; --card-bg: #ffffff; --text: #1c1c1e; --subtext: #8e8e93; --danger: #ff3b30; --success: #34c759; }
-    
+
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body { 
-      margin: 0; padding: 0; width: 100vw; height: 100vh; 
-      background-color: var(--bg); font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+    html, body {
+      margin: 0; padding: 0; width: 100vw; height: 100vh;
+      background-color: var(--bg); font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       overflow: hidden; position: fixed;
     }
 
     .app-container { height: 100%; display: flex; flex-direction: column; }
-    
-    .header { 
-      padding: env(safe-area-inset-top, 40px) 20px 15px; 
+
+    .header {
+      padding: env(safe-area-inset-top, 40px) 20px 15px;
       background: white; border-bottom: 0.5px solid rgba(0,0,0,0.1);
       display: flex; align-items: center; gap: 12px; flex-shrink: 0;
     }
@@ -34,27 +34,29 @@
     .header h1 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text); }
 
     .content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-    
+
     /* VISTAS */
     .view { display: none; width: 100%; max-width: 400px; flex-direction: column; }
     .view.active { display: flex; }
 
     /* LECTOR */
     #reader { width: 100%; border-radius: 16px; overflow: hidden; background: #000; margin-bottom: 20px; }
-    
+    #reader video { width: 100% !important; height: auto !important; object-fit: cover; }
+
     /* BOTONES */
     .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 600; font-size: 16px; cursor: pointer; margin-top: 10px; }
     .btn-primary { background: var(--argerich); color: white; }
     .btn-secondary { background: #e5e5ea; color: var(--text); }
+    .btn[disabled] { opacity: .65; cursor: default; }
 
     /* FORMULARIO */
     .form-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; }
     .product-title { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 5px; }
     .stock-badge { align-self: center; padding: 5px 12px; border-radius: 6px; background: #eef2f7; color: var(--argerich); font-weight: 700; font-size: 12px; margin: 0 auto 20px; display: table; }
-    
+
     label { font-size: 11px; font-weight: 600; color: var(--subtext); text-transform: uppercase; margin-bottom: 5px; display: block; }
     select { width: 100%; padding: 12px; border-radius: 10px; border: none; background: #f2f2f7; font-size: 16px; margin-bottom: 15px; -webkit-appearance: none; }
-    
+
     .toggle-row { display: flex; gap: 10px; margin-bottom: 20px; background: #f2f2f7; padding: 4px; border-radius: 12px; }
     .tgl { flex: 1; padding: 10px; border-radius: 8px; border: none; background: transparent; font-weight: 600; color: var(--subtext); }
     .tgl.active { background: white; color: var(--text); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -71,7 +73,11 @@
   <div class="app-container">
     <div class="header">
       <div class="logo">
-        <svg viewBox="0 0 100 100" width="20" height="20"><path d="M50 5 L10 25 L10 60 C10 80 45 95 50 95 C55 95 90 80 90 60 L90 25 Z" fill="white"/><rect x="42" y="30" width="16" height="40" fill="#0052a4"/><rect x="30" y="42" width="40" height="16" fill="#0052a4"/></svg>
+        <svg viewBox="0 0 100 100" width="20" height="20">
+          <path d="M50 5 L10 25 L10 60 C10 80 45 95 50 95 C55 95 90 80 90 60 L90 25 Z" fill="white"/>
+          <rect x="42" y="30" width="16" height="40" fill="#0052a4"/>
+          <rect x="30" y="42" width="40" height="16" fill="#0052a4"/>
+        </svg>
       </div>
       <h1>Patología Argerich</h1>
     </div>
@@ -86,10 +92,10 @@
         <div class="form-card">
           <h2 class="product-title" id="txt-prod">Nombre</h2>
           <div class="stock-badge" id="txt-stock">STOCK: 0</div>
-          
+
           <label>Responsable</label>
           <select id="sel-user"><option>Andrea</option><option>Sebas</option><option>Marina</option><option>Roberto</option></select>
-          
+
           <label>Ubicación</label>
           <select id="sel-loc"><option>Heladera</option><option>Alacena</option><option>Depósito</option></select>
 
@@ -123,51 +129,92 @@
   </div>
 
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwa2HiiSrn2uE8Ic9Jz_MTpnEqG-FgwTyBkcMEomWSC1vCfPBahiH01F4tWP-GWD5Mutw/exec'; 
-    let html5QrCode; let currentId = ''; let qty = 1; let mode = 'take'; let unidad = '';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwa2HiiSrn2uE8Ic9Jz_MTpnEqG-FgwTyBkcMEomWSC1vCfPBahiH01F4tWP-GWD5Mutw/exec';
+
+    let html5QrCode = null;
+    let currentId = '';
+    let qty = 1;
+    let mode = 'take';
+    let unidad = '';
 
     function showView(id) {
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.getElementById(id).classList.add('active');
     }
 
-    function iniciarCamara() {
-      document.getElementById('btn-start').style.display = 'none';
-      if (html5QrCode) { html5QrCode.clear(); }
-      
+    async function iniciarCamara() {
+      const btn = document.getElementById('btn-start');
+
+      btn.disabled = true;
+      const originalText = btn.innerText;
+      btn.innerText = 'Abriendo cámara...';
+
+      // LIMPIEZA CORRECTA: stop -> clear -> limpiar DOM
+      if (html5QrCode) {
+        try { await html5QrCode.stop(); } catch (e) {}
+        try { await html5QrCode.clear(); } catch (e) {}
+        html5QrCode = null;
+      }
+      document.getElementById('reader').innerHTML = '';
+
       html5QrCode = new Html5Qrcode("reader");
-      
-      // CONFIGURACIÓN ESTABLE (Sin forzar 16:9 ni resoluciones raras)
-      html5QrCode.start(
-        { facingMode: "environment" }, 
-        { fps: 10, qrbox: 250 },
-        (decodedText) => {
-          html5QrCode.stop().then(() => { loadProduct(decodedText); });
-        }
-      ).catch(err => {
+
+      try {
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          async (decodedText) => {
+            try { await html5QrCode.stop(); } catch (e) {}
+            loadProduct(decodedText);
+          }
+        );
+
+        // Si arrancó bien, recién ahí escondo el botón
+        btn.style.display = 'none';
+        btn.disabled = false;
+        btn.innerText = originalText;
+
+      } catch (err) {
         alert("Error de cámara: " + err);
+        btn.disabled = false;
+        btn.innerText = originalText;
         reiniciarApp();
-      });
+      }
     }
 
     function loadProduct(id) {
       showView('view-loading');
-      fetch(`${SCRIPT_URL}?id=${id}`)
+      document.getElementById('load-msg').innerText = 'Buscando...';
+
+      fetch(`${SCRIPT_URL}?id=${encodeURIComponent(id)}`)
         .then(r => r.json())
         .then(res => {
-          if(res.status === 'success') {
-            currentId = id; qty = 1; unidad = res.unidad;
-            document.getElementById('txt-prod').innerText = res.producto;
-            document.getElementById('txt-stock').innerText = "STOCK: " + res.stock + " " + unidad;
+          if (res.status === 'success') {
+            currentId = id;
+            qty = 1;
+            unidad = res.unidad || '';
+
+            document.getElementById('txt-prod').innerText = res.producto || id;
+            document.getElementById('txt-stock').innerText = "STOCK: " + res.stock + (unidad ? (" " + unidad) : "");
             document.getElementById('txt-qty').innerText = qty;
+
             showView('view-form');
           } else {
-            alert("No encontrado"); reiniciarApp();
+            alert("No encontrado");
+            reiniciarApp();
           }
+        })
+        .catch(() => {
+          alert("Error de conexión");
+          reiniciarApp();
         });
     }
 
-    function chgQty(n) { qty = Math.max(1, qty + n); document.getElementById('txt-qty').innerText = qty; }
+    function chgQty(n) {
+      qty = Math.max(1, qty + n);
+      document.getElementById('txt-qty').innerText = qty;
+    }
+
     function setMode(m) {
       mode = m;
       document.getElementById('tgl-take').classList.toggle('active', m === 'take');
@@ -176,18 +223,57 @@
 
     function doSave() {
       showView('view-loading');
-      const data = { id: currentId, action: mode, qty: qty, user: document.getElementById('sel-user').value, acopio: document.getElementById('sel-loc').value };
-      fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data) })
-        .then(r => r.json())
-        .then(res => {
-          document.getElementById('txt-final').innerText = res.stock + " " + unidad;
-          showView('view-success');
-        });
+      document.getElementById('load-msg').innerText = 'Guardando...';
+
+      const data = {
+        id: currentId,
+        action: mode,
+        qty: qty,
+        user: document.getElementById('sel-user').value,
+        acopio: document.getElementById('sel-loc').value
+      };
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        // evita preflight en Apps Script
+        headers: { "Content-Type": "text/plain;charset=utf-8" }
+      })
+      .then(r => r.json())
+      .then(res => {
+        document.getElementById('txt-final').innerText = (res.stock ?? '?') + (unidad ? (" " + unidad) : "");
+        showView('view-success');
+      })
+      .catch(() => {
+        alert("Error al guardar");
+        showView('view-form');
+      });
     }
 
-    function reiniciarApp() {
+    async function reiniciarApp() {
       showView('view-scan');
-      document.getElementById('btn-start').style.display = 'block';
+
+      // Frenar/limpiar scanner si quedó vivo
+      if (html5QrCode) {
+        try { await html5QrCode.stop(); } catch (e) {}
+        try { await html5QrCode.clear(); } catch (e) {}
+        html5QrCode = null;
+      }
+
+      // Limpiar contenedor de cámara
+      document.getElementById('reader').innerHTML = '';
+
+      // Reset UI
+      const btn = document.getElementById('btn-start');
+      btn.style.display = 'block';
+      btn.disabled = false;
+      btn.innerText = '📷 INICIAR CÁMARA';
+
+      // Reset estado
+      currentId = '';
+      qty = 1;
+      mode = 'take';
+      unidad = '';
     }
   </script>
 </body>
