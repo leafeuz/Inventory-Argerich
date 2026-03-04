@@ -6,7 +6,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Argerich">
-  <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=Inventario+Argerich&background=0052a4&color=fff&size=512&bold=true">
+  
+  <link rel="apple-touch-icon" href="logoargerich.jpeg">
+  <link rel="icon" type="image/jpeg" href="logoargerich.jpeg">
 
   <title>Tablero Patología Argerich</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
@@ -29,7 +31,10 @@
       border-bottom: 0.5px solid var(--border);
       display: flex; align-items: center; gap: 12px; flex-shrink: 0; z-index: 10;
     }
-    .logo { width: 32px; height: 32px; background: var(--argerich); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    
+    /* CSS AJUSTADO PARA QUE LA IMAGEN DEL LOGO SE VEA PERFECTA */
+    .logo { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; }
+    
     .header h1 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
 
     .dashboard { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
@@ -102,13 +107,7 @@
 
   <div class="app-container">
     <div class="header">
-      <div class="logo">
-        <svg viewBox="0 0 100 100" width="18" height="18">
-          <path d="M50 5 L10 25 L10 60 C10 80 45 95 50 95 C55 95 90 80 90 60 L90 25 Z" fill="white"/>
-          <rect x="42" y="30" width="16" height="40" fill="#0052a4"/>
-          <rect x="30" y="42" width="40" height="16" fill="#0052a4"/>
-        </svg>
-      </div>
+      <img src="logoargerich.jpeg" class="logo" alt="Logo Argerich">
       <h1>Patología Argerich</h1>
     </div>
 
@@ -277,7 +276,7 @@
     }
 
     async function iniciarCamara() {
-      initAudio(); document.getElementById('inp-search').blur(); // Esconde teclado si estaba abierto
+      initAudio(); document.getElementById('inp-search').blur(); 
       const btn = document.getElementById('btn-start');
       btn.disabled = true; btn.innerHTML = '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.34-9.57l-3 3"></path></svg> INICIANDO LENTE...';
       lockForm(true); await apagarCamara();
@@ -367,7 +366,6 @@
       currentId = ''; qty = 1; mode = 'take'; unidad = ''; scanLock = false;
     }
 
-    // ====== BUSCADOR PRO (AUTOCOMPLETE) ======
     async function cargarListaProductos(force = false) {
       const now = Date.now();
       const ts = Number(localStorage.getItem(LIST_CACHE_TS) || 0);
@@ -383,7 +381,7 @@
           localStorage.setItem(LIST_CACHE_KEY, JSON.stringify(res.ids));
           localStorage.setItem(LIST_CACHE_TS, String(now));
         }
-      } catch(e) {} // Falla silenciosa
+      } catch(e) {} 
     }
 
     const searchInput = document.getElementById('inp-search');
@@ -394,7 +392,7 @@
       const q = query.toLowerCase().trim();
       let filtered = productCache;
       if (q) { filtered = productCache.filter(p => p.toLowerCase().includes(q)); }
-      filtered = filtered.slice(0, 30); // Limita a 30 para rendimiento visual
+      filtered = filtered.slice(0, 30); 
 
       if (filtered.length === 0) { searchResults.classList.remove('active'); return; }
 
@@ -402,12 +400,12 @@
         const li = document.createElement('li');
         li.className = 'autocomplete-item';
         li.innerText = item;
-        li.onmousedown = function(e) { e.preventDefault(); } // Evita que se dispare el blur antes del click
+        li.onmousedown = function(e) { e.preventDefault(); } 
         li.onclick = () => {
           initAudio();
           searchInput.value = item;
           searchResults.classList.remove('active');
-          searchInput.blur(); // Esconde el teclado en iOS
+          searchInput.blur(); 
           apagarCamara();
           setOverlay('show', 'Buscando producto...', ICON.clock);
           procesarBusqueda(item);
@@ -420,14 +418,13 @@
     searchInput.addEventListener('input', function() { renderAutocomplete(this.value); });
     searchInput.addEventListener('focus', function() { renderAutocomplete(this.value); });
     
-    // Si hace click afuera de la barra de búsqueda, se esconde la lista
     document.addEventListener('click', function(e) {
       if (!e.target.closest('.search-module')) { searchResults.classList.remove('active'); }
     });
 
     document.addEventListener('DOMContentLoaded', () => {
       cargarMemoria();
-      cargarListaProductos(false); // Precarga la lista de fondo al abrir la app
+      cargarListaProductos(false); 
     });
   </script>
 </body>
